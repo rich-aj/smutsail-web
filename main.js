@@ -35,7 +35,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     body: JSON.stringify(data),
                 });
                 
-                const result = await response.json();
+                let result;
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                    // If response is not JSON, get text
+                    const text = await response.text();
+                    throw new Error(text || `Server error: ${response.status}`);
+                }
                 
                 if (response.ok) {
                     // Success
@@ -43,12 +50,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     formMessage.className = "form-message success";
                     form.reset();
                 } else {
-                    throw new Error(result.error || "Something went wrong");
+                    throw new Error(result.error || `Server error: ${response.status}`);
                 }
             } catch (error) {
-                // Error - fallback to Formspree or show error
+                // Error - show specific error message
                 console.error("Error:", error);
-                formMessage.textContent = "Something went wrong. Please try again or email us directly at info@smutsail.com";
+                let errorMessage = "Something went wrong. Please try again or email us directly at info@smutsail.com";
+                
+                // Try to get more specific error message
+                if (error.message) {
+                    errorMessage = error.message;
+                } else if (error instanceof TypeError && error.message.includes('fetch')) {
+                    errorMessage = "Network error. Please check your connection and try again.";
+                }
+                
+                formMessage.textContent = errorMessage;
                 formMessage.className = "form-message error";
             } finally {
                 submitButton.disabled = false;

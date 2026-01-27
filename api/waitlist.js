@@ -1,5 +1,15 @@
 // Vercel Serverless Function to send waitlist emails using SendGrid
 export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -52,17 +62,6 @@ export default async function handler(req, res) {
         },
         content: [
           {
-            type: 'text/html',
-            value: `
-              <h2>New Waitlist Signup</h2>
-              <p><strong>Name:</strong> ${name}</p>
-              <p><strong>Email:</strong> ${email}</p>
-              <p><strong>Signed up:</strong> ${new Date().toLocaleString()}</p>
-              <hr>
-              <p><em>You can reply directly to this email to contact ${name}.</em></p>
-            `,
-          },
-          {
             type: 'text/plain',
             value: `
 New Waitlist Signup
@@ -74,14 +73,37 @@ Signed up: ${new Date().toLocaleString()}
 You can reply directly to this email to contact ${name}.
             `,
           },
+          {
+            type: 'text/html',
+            value: `
+              <h2>New Waitlist Signup</h2>
+              <p><strong>Name:</strong> ${name}</p>
+              <p><strong>Email:</strong> ${email}</p>
+              <p><strong>Signed up:</strong> ${new Date().toLocaleString()}</p>
+              <hr>
+              <p><em>You can reply directly to this email to contact ${name}.</em></p>
+            `,
+          },
         ],
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
+      let errorMessage = `SendGrid API error (${response.status})`;
+      
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.errors && errorJson.errors.length > 0) {
+          errorMessage = errorJson.errors.map(e => e.message).join(', ');
+        }
+      } catch (e) {
+        // If parsing fails, use the raw error text
+        errorMessage = errorText || errorMessage;
+      }
+      
       console.error('SendGrid API Error:', response.status, errorText);
-      throw new Error(`SendGrid API error: ${response.status} - ${errorText}`);
+      throw new Error(errorMessage);
     }
 
     return res.status(200).json({
