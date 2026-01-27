@@ -176,11 +176,15 @@
                     <h2>Be the first to apply smarter—not harder.</h2>
                     <p>Launching Fall 2025. Get early access, beta invites, and founder updates.</p>
                 </div>
-                <form class="waitlist-form">
-                    <input type="text" placeholder="Full name" required />
-                    <input type="email" placeholder="Email address" required />
+                <form class="waitlist-form" id="waitlistForm">
+                    <input type="text" name="name" placeholder="Full name" required />
+                    <input type="email" name="email" placeholder="Email address" required />
+                    <input type="hidden" name="_to" value="info@smutsail.com" />
+                    <input type="hidden" name="_subject" value="New Smutsail Waitlist Signup" />
+                    <input type="hidden" name="_replyto" value="info@smutsail.com" />
                     <button type="submit">Join Smutsail Waitlist</button>
                     <p class="form-note">No spam — just important updates.</p>
+                    <p class="form-message" id="formMessage"></p>
                 </form>
             </div>
         </section>

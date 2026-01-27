@@ -1,15 +1,59 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const form = document.querySelector(".waitlist-form");
+    const form = document.getElementById("waitlistForm");
+    const formMessage = document.getElementById("formMessage");
+    
     if (form) {
-        form.addEventListener("submit", (event) => {
+        form.addEventListener("submit", async (event) => {
             event.preventDefault();
-            const [nameInput, emailInput] = form.querySelectorAll("input");
-            const name = nameInput?.value ?? "";
-            const email = emailInput?.value ?? "";
-            nameInput.value = "";
-            emailInput.value = "";
-            const message = `Thanks${name ? `, ${name}` : ""}! We'll reach you at ${email}.`;
-            alert(message);
+            
+            const submitButton = form.querySelector("button[type='submit']");
+            const originalButtonText = submitButton.textContent;
+            
+            // Disable button and show loading state
+            submitButton.disabled = true;
+            submitButton.textContent = "Submitting...";
+            formMessage.textContent = "";
+            formMessage.className = "form-message";
+            
+            // Get form data
+            const formData = new FormData(form);
+            const data = {
+                name: formData.get("name"),
+                email: formData.get("email"),
+                _to: formData.get("_to"),
+                _subject: formData.get("_subject"),
+                _replyto: formData.get("_replyto")
+            };
+            
+            try {
+                // Send to Vercel serverless function
+                const response = await fetch("/api/waitlist", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Success
+                    formMessage.textContent = `Thanks${data.name ? `, ${data.name}` : ""}! We'll reach you at ${data.email}.`;
+                    formMessage.className = "form-message success";
+                    form.reset();
+                } else {
+                    throw new Error(result.error || "Something went wrong");
+                }
+            } catch (error) {
+                // Error - fallback to Formspree or show error
+                console.error("Error:", error);
+                formMessage.textContent = "Something went wrong. Please try again or email us directly at info@smutsail.com";
+                formMessage.className = "form-message error";
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
+            }
         });
     }
 
