@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="8" fill="#8b5cf6"/>
+  <!-- Boat hull -->
+  <path d="M6 22 Q16 25 26 22 L24 26 Q16 28 8 26 Z" fill="#c4b5fd"/>
+  <!-- Mast -->
+  <line x1="16" y1="8" x2="16" y2="23" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Sail -->
+  <path d="M16 9 L24 21 L16 21 Z" fill="white" opacity="0.9"/>
+  <path d="M16 9 L9 19 L16 19 Z" fill="#e9d5ff" opacity="0.7"/>
+  <!-- Star sparkle -->
+  <circle cx="19" cy="7" r="1.2" fill="white"/>
+  <line x1="19" y1="5" x2="19" y2="6" stroke="white" stroke-width="0.8"/>
+  <line x1="19" y1="8" x2="19" y2="9" stroke="white" stroke-width="0.8"/>
+  <line x1="17" y1="7" x2="18" y2="7" stroke="white" stroke-width="0.8"/>
+  <line x1="20" y1="7" x2="21" y2="7" stroke="white" stroke-width="0.8"/>
+</svg>

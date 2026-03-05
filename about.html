@@ -5,6 +5,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>About Us | Smutsail</title>
+    <meta name="description" content="Learn about Smutsail — our mission to empower students worldwide with intelligent tools that remove the guesswork from applying to grad school and securing funding." />
+    <meta property="og:title" content="About Us | Smutsail" />
+    <meta property="og:description" content="We built Smutsail to make grad school applications simpler, smarter, and more accessible for every student." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
@@ -15,13 +20,18 @@
 <body>
     <header class="site-header">
         <div class="container header-content">
-            <a href="./index.html" class="logo">Smutsail</a>
-            <nav class="nav">
+            <a href="./index.html" class="logo logo-img">
+                <img src="./logo.svg" alt="Smutsail" onerror="this.parentElement.classList.remove('logo-img'); this.style.display='none'; this.parentElement.insertAdjacentText('beforeend','Smutsail');" />
+            </a>
+            <button class="hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+            <nav class="nav" id="mainNav">
                 <a href="./index.html">Home</a>
                 <a href="./about.html">About</a>
                 <a href="./services.html">Services</a>
                 <a href="./index.html#download">App</a>
-                <a href="./index.html#waitlist" class="waitlist-link">Join Waitlist</a>
+                <a href="./index.html#waitlist" class="waitlist-link">Get Beta Access</a>
             </nav>
         </div>
     </header>
@@ -93,9 +103,9 @@
         <section class="section light-bg">
             <div class="container">
                 <div class="section-header">
-                    <h2>Ready to get started?</h2>
-                    <p class="intro">Join thousands of students who are applying smarter with Smutsail.</p>
-                    <a href="./index.html#waitlist" class="cta">Join the Waitlist</a>
+                    <h2>Ready to be part of something new?</h2>
+                    <p class="intro">Join our first wave of beta users and help shape how students apply to grad school.</p>
+                    <a href="./index.html#waitlist" class="cta">Get Beta Access</a>
                 </div>
             </div>
         </section>
@@ -104,7 +114,9 @@
     <footer class="site-footer">
         <div class="container footer-grid">
             <div>
-                <a href="./index.html" class="logo">Smutsail</a>
+                <a href="./index.html" class="logo logo-img">
+                <img src="./logo.svg" alt="Smutsail" onerror="this.parentElement.classList.remove('logo-img'); this.style.display='none'; this.parentElement.insertAdjacentText('beforeend','Smutsail');" />
+            </a>
                 <p>AI that unlocks graduate education and funding for everyone.</p>
             </div>
             <div>
@@ -114,15 +126,12 @@
             <div>
                 <p class="eyebrow">Follow</p>
                 <div class="social">
-                    <a href="#">LinkedIn</a>
-                    <a href="#">Twitter</a>
-                    <a href="#">Instagram</a>
-                    <a href="#">TikTok</a>
-                    <a href="#">Facebook</a>
+                    <a href="https://www.linkedin.com/company/smutsail" target="_blank" rel="noopener">LinkedIn</a>
+                    <a href="https://www.instagram.com/smutsail" target="_blank" rel="noopener">Instagram</a>
                 </div>
             </div>
         </div>
-        <p class="legal">© 2025 Smutsail. All rights reserved.</p>
+        <p class="legal">© 2026 Smutsail. All rights reserved.</p>
     </footer>
 
     <script src="./main.js"></script>

@@ -5,6 +5,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smutsail | Apply Smarter</title>
+    <meta name="description" content="Smutsail is your AI-powered companion for discovering and applying to Master's, PhD, and Doctorate programs — plus scholarships from schools, governments, and private bodies." />
+    <meta property="og:title" content="Smutsail | Apply Smarter" />
+    <meta property="og:description" content="Find the right grad school. Smarter. Faster. AI-powered school matching, scholarship finder, and Easy Apply — all in one app." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Smutsail | Apply Smarter" />
+    <meta name="twitter:description" content="Find the right grad school. Smarter. Faster." />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
@@ -15,13 +23,18 @@
 <body>
     <header class="site-header">
         <div class="container header-content">
-            <a href="./index.html" class="logo">Smutsail</a>
-            <nav class="nav">
+            <a href="./index.html" class="logo logo-img">
+                <img src="./logo.svg" alt="Smutsail" onerror="this.parentElement.classList.remove('logo-img'); this.style.display='none'; this.parentElement.insertAdjacentText('beforeend','Smutsail');" />
+            </a>
+            <button class="hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+            <nav class="nav" id="mainNav">
                 <a href="./index.html">Home</a>
                 <a href="./about.html">About</a>
                 <a href="./services.html">Services</a>
                 <a href="#download">App</a>
-                <a href="#waitlist" class="waitlist-link">Join Waitlist</a>
+                <a href="#waitlist" class="waitlist-link">Get Beta Access</a>
             </nav>
         </div>
     </header>
@@ -30,13 +43,13 @@
         <section id="home" class="hero">
             <div class="container hero-grid">
                 <div>
-                    <p class="eyebrow">Launching Fall 2025</p>
+                    <p class="eyebrow">Now in Beta</p>
                     <h1>Find the Right Grad School. Smarter. Faster.</h1>
                     <p class="subhead">
                         Your personal AI companion for discovering and applying to Master's, PhD, and Doctorate
                         programs — plus scholarships from schools, governments, and private bodies.
                     </p>
-                    <a href="#waitlist" class="cta">Apply smarter — join Smutsail today</a>
+                    <a href="#waitlist" class="cta">Get beta access — apply smarter today</a>
                 </div>
                 <div class="hero-card">
                     <div class="card-header">
@@ -135,6 +148,42 @@
             </div>
         </section>
 
+        <section id="screenshots" class="section screenshots-section">
+            <div class="container">
+                <div class="section-header">
+                    <p class="eyebrow">The App</p>
+                    <h2>See Smutsail in action</h2>
+                    <p class="section-subtitle">Everything you need to manage your grad school journey — in one place.</p>
+                </div>
+                <div class="screenshots-grid">
+                    <div class="phone-mockup">
+                        <div class="phone-frame">
+                            <img src="./images/screenshot-home.png" alt="Smutsail home screen showing applications dashboard" />
+                        </div>
+                        <p class="screenshot-caption">Dashboard</p>
+                    </div>
+                    <div class="phone-mockup phone-mockup--center">
+                        <div class="phone-frame">
+                            <img src="./images/screenshot-universities.png" alt="Browse and filter universities" />
+                        </div>
+                        <p class="screenshot-caption">Find Universities</p>
+                    </div>
+                    <div class="phone-mockup phone-mockup--center">
+                        <div class="phone-frame">
+                            <img src="./images/screenshot-university-detail.png" alt="University details with requirements and deadlines" />
+                        </div>
+                        <p class="screenshot-caption">University Details</p>
+                    </div>
+                    <div class="phone-mockup">
+                        <div class="phone-frame">
+                            <img src="./images/screenshot-scholarships.png" alt="Scholarships screen" />
+                        </div>
+                        <p class="screenshot-caption">Scholarships</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section id="download" class="section light-bg">
             <div class="container download-grid">
                 <div>
@@ -145,7 +194,7 @@
                         <li>Receive AI-recommended schools and scholarships.</li>
                         <li>Apply with confidence using Easy Apply and smart reminders.</li>
                     </ol>
-                    <p class="coming-soon">Coming Fall 2025 🚀</p>
+                    <p class="coming-soon">Now available in beta 🚀</p>
                     <div class="store-badges">
                         <span>iOS App Store</span>
                         <span>Google Play Store</span>
@@ -172,9 +221,9 @@
         <section id="waitlist" class="section waitlist">
             <div class="container waitlist-card">
                 <div>
-                    <p class="eyebrow">Join the waitlist</p>
-                    <h2>Be the first to apply smarter—not harder.</h2>
-                    <p>Launching Fall 2025. Get early access, beta invites, and founder updates.</p>
+                    <p class="eyebrow">Beta Access</p>
+                    <h2>Be one of our first users. Shape the product.</h2>
+                    <p>We're onboarding our first wave of beta users. Get early access, influence the product, and start applying to grad school smarter.</p>
                 </div>
                 <form class="waitlist-form" id="waitlistForm">
                     <input type="text" name="name" placeholder="Full name" required />
@@ -182,7 +231,7 @@
                     <input type="hidden" name="_to" value="info@smutsail.com" />
                     <input type="hidden" name="_subject" value="New Smutsail Waitlist Signup" />
                     <input type="hidden" name="_replyto" value="info@smutsail.com" />
-                    <button type="submit">Join Smutsail Waitlist</button>
+                    <button type="submit">Get Beta Access</button>
                     <p class="form-note">No spam — just important updates.</p>
                     <p class="form-message" id="formMessage"></p>
                 </form>
@@ -193,7 +242,9 @@
     <footer class="site-footer">
         <div class="container footer-grid">
             <div>
-                <a href="./index.html" class="logo">Smutsail</a>
+                <a href="./index.html" class="logo logo-img">
+                    <img src="./logo.svg" alt="Smutsail" onerror="this.parentElement.classList.remove('logo-img'); this.style.display='none'; this.parentElement.insertAdjacentText('beforeend','Smutsail');" />
+                </a>
                 <p>AI that unlocks graduate education and funding for everyone.</p>
             </div>
             <div>
@@ -203,15 +254,12 @@
             <div>
                 <p class="eyebrow">Follow</p>
                 <div class="social">
-                    <a href="#">LinkedIn</a>
-                    <a href="#">Twitter</a>
-                    <a href="#">Instagram</a>
-                    <a href="#">TikTok</a>
-                    <a href="#">Facebook</a>
+                    <a href="https://www.linkedin.com/company/smutsail" target="_blank" rel="noopener">LinkedIn</a>
+                    <a href="https://www.instagram.com/smutsail" target="_blank" rel="noopener">Instagram</a>
                 </div>
             </div>
         </div>
-        <p class="legal">© 2025 Smutsail. All rights reserved.</p>
+        <p class="legal">© 2026 Smutsail. All rights reserved.</p>
     </footer>
 
     <script src="./main.js"></script>

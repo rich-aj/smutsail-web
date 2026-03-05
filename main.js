@@ -1,4 +1,35 @@
 document.addEventListener("DOMContentLoaded", () => {
+    // Mobile hamburger menu
+    const hamburger = document.getElementById("hamburger");
+    const mainNav = document.getElementById("mainNav");
+
+    if (hamburger && mainNav) {
+        hamburger.addEventListener("click", () => {
+            const isOpen = mainNav.classList.toggle("open");
+            hamburger.classList.toggle("open", isOpen);
+            hamburger.setAttribute("aria-expanded", isOpen);
+        });
+
+        // Close menu when a nav link is clicked
+        mainNav.querySelectorAll("a").forEach(link => {
+            link.addEventListener("click", () => {
+                mainNav.classList.remove("open");
+                hamburger.classList.remove("open");
+                hamburger.setAttribute("aria-expanded", "false");
+            });
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener("click", (e) => {
+            if (!hamburger.contains(e.target) && !mainNav.contains(e.target)) {
+                mainNav.classList.remove("open");
+                hamburger.classList.remove("open");
+                hamburger.setAttribute("aria-expanded", "false");
+            }
+        });
+    }
+
+
     const form = document.getElementById("waitlistForm");
     const formMessage = document.getElementById("formMessage");
     

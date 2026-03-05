@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 130" fill="none">
+  <defs>
+    <!-- Main sail: deep lavender → rich violet -->
+    <linearGradient id="mainSailGrad" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#ddd6fe"/>
+      <stop offset="45%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+
+    <!-- Front sail: pale to soft violet -->
+    <linearGradient id="frontSailGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0eaff"/>
+      <stop offset="100%" stop-color="#c4b5fd"/>
+    </linearGradient>
+
+    <!-- Hull: deep violet -->
+    <linearGradient id="hullGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4c1d95"/>
+    </linearGradient>
+
+    <!-- Text gradient: dark to medium violet -->
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5b21b6"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+
+    <!-- Wave gradient -->
+    <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#a78bfa" stop-opacity="0.15"/>
+      <stop offset="50%"  stop-color="#8b5cf6" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0.15"/>
+    </linearGradient>
+
+    <!-- Radial aura behind boat -->
+    <radialGradient id="auraGrad" cx="50%" cy="55%" r="50%">
+      <stop offset="0%"   stop-color="#8b5cf6" stop-opacity="0.13"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Glow filter for sparkles -->
+    <filter id="glow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="2.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Drop shadow for boat -->
+    <filter id="shadow" x="-18%" y="-18%" width="136%" height="145%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#6d28d9" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <!-- Soft radial aura behind the icon -->
+  <ellipse cx="60" cy="68" rx="60" ry="54" fill="url(#auraGrad)"/>
+
+  <!-- ── BOAT ── -->
+  <g filter="url(#shadow)">
+
+    <!-- Front (jib) sail — wind-curved bezier -->
+    <path d="M56 34 C 43 52, 29 70, 17 87 L 56 87 Z"
+          fill="url(#frontSailGrad)" opacity="0.92"/>
+
+    <!-- Main sail — wind-curved bezier -->
+    <path d="M62 12 C 71 36, 84 61, 101 87 L 62 87 Z"
+          fill="url(#mainSailGrad)"/>
+
+    <!-- Mast -->
+    <line x1="60" y1="9" x2="60" y2="92"
+          stroke="#3b0764" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- Mast finial (tiny circle at top) -->
+    <circle cx="60" cy="9" r="2.2" fill="#7c3aed"/>
+
+    <!-- Hull -->
+    <path d="M13 93 Q60 106 107 93 L100 104 Q60 117 20 104 Z"
+          fill="url(#hullGrad)"/>
+
+    <!-- Hull highlight sheen -->
+    <path d="M22 96 Q60 107 98 96"
+          stroke="#ddd6fe" stroke-width="1.2" fill="none" opacity="0.3"/>
+
+  </g>
+
+  <!-- Wave lines -->
+  <path d="M7 111 Q33 106 60 111 Q87 116 113 111"
+        stroke="url(#waveGrad)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M14 119 Q40 114 66 119 Q92 124 111 119"
+        stroke="url(#waveGrad)" stroke-width="1.7" fill="none" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- ── SPARKLES ── -->
+
+  <!-- Large 4-point star (top right) -->
+  <g transform="translate(85, 17)" filter="url(#glow)">
+    <path d="M0 -10.5 L2.3 -2.3 L10.5 0 L2.3 2.3 L0 10.5 L-2.3 2.3 L-10.5 0 L-2.3 -2.3 Z"
+          fill="white"/>
+  </g>
+
+  <!-- Secondary smaller star (upper left of mast) -->
+  <g transform="translate(46, 25)" filter="url(#glow)">
+    <path d="M0 -5.5 L1.2 -1.2 L5.5 0 L1.2 1.2 L0 5.5 L-1.2 1.2 L-5.5 0 L-1.2 -1.2 Z"
+          fill="white" opacity="0.82"/>
+  </g>
+
+  <!-- Tiny sparkle dots -->
+  <circle cx="34" cy="52" r="1.9" fill="white" opacity="0.88" filter="url(#glow)"/>
+  <circle cx="26" cy="63" r="1.3" fill="white" opacity="0.6"/>
+  <circle cx="42" cy="65" r="0.95" fill="white" opacity="0.45"/>
+
+  <!-- ── TEXT ── -->
+  <text
+    x="131"
+    y="88"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="57"
+    font-weight="700"
+    fill="url(#textGrad)"
+    letter-spacing="-0.5"
+  >Smutsail</text>
+</svg>
