@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find your programme — Smutsail</title>
+<meta name="description" content="Tell us what you want to study. Get real graduate programmes with real application deadlines — every one linked to its source.">
+<link rel="icon" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+    /* Page-specific only — everything else comes from styles.css */
+    .finder { padding: 3rem 0 5rem; }
+    .step { display: none; }
+    .step.active { display: block; animation: fadeUp .35s ease; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .qlabel { font-size: 1.375rem; font-weight: 600; margin-bottom: .375rem; }
+    .qhelp { color: var(--muted); font-size: .9375rem; margin-bottom: 1.5rem; }
+
+    .choices { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    .choice {
+        border: 2px solid var(--border); background: var(--card); border-radius: 12px;
+        padding: 1rem 1.125rem; font: inherit; font-weight: 500; color: var(--text);
+        cursor: pointer; text-align: left; transition: all .18s ease;
+    }
+    .choice:hover { border-color: var(--accent-light); background: var(--card-hover); }
+    .choice[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+
+    .field { width: 100%; padding: 1rem 1.125rem; border: 2px solid var(--border); border-radius: 12px;
+             font: inherit; color: var(--text); background: var(--card); }
+    .field:focus { outline: none; border-color: var(--accent); }
+
+    .row { display: flex; gap: .75rem; align-items: center; margin-top: 1.75rem; flex-wrap: wrap; }
+    .ghost { background: none; border: none; color: var(--muted); font: inherit; cursor: pointer; padding: .75rem 0; }
+    .ghost:hover { color: var(--accent); }
+
+    .progress-dots { display: flex; gap: .5rem; margin-bottom: 2rem; }
+    .dot { height: 4px; flex: 1; border-radius: 2px; background: var(--border-light); transition: background .25s; }
+    .dot.on { background: var(--accent); }
+
+    /* results */
+    .summary { text-align: center; padding: 2rem 0 1rem; }
+    .summary .big { font-size: clamp(2.5rem, 9vw, 4rem); font-weight: 700; line-height: 1;
+                    background: var(--accent-gradient); -webkit-background-clip: text;
+                    background-clip: text; -webkit-text-fill-color: transparent; }
+    .summary .sub { color: var(--muted); margin-top: .5rem; }
+
+    .prog { border: 2px solid var(--border-light); border-radius: 14px; padding: 1.25rem 1.375rem;
+            margin-bottom: .875rem; background: var(--card); }
+    .prog h3 { font-size: 1.0625rem; margin: 0 0 .25rem; line-height: 1.35; }
+    .prog .uni { color: var(--muted); font-size: .9375rem; margin-bottom: .875rem; }
+    .meta { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
+    .chip { font-size: .8125rem; padding: .25rem .625rem; border-radius: 999px;
+            background: var(--accent-soft); color: var(--accent-2); font-weight: 500; }
+    .chip.plain { background: #f1f3f9; color: var(--muted); }
+
+    .dl { display: flex; align-items: baseline; gap: .5rem; padding: .75rem .875rem; border-radius: 10px;
+          background: #f6f4ff; margin-bottom: .75rem; flex-wrap: wrap; }
+    .dl b { font-size: 1rem; color: var(--text); }
+    .dl small { color: var(--muted); }
+    .dl.none { background: #fbfbfd; }
+    .dl.soon { background: #fff4ed; }
+
+    .src { font-size: .8125rem; color: var(--muted); }
+    .src a { color: var(--accent-2); text-decoration: underline; text-underline-offset: 2px; }
+
+    .locked { position: relative; }
+    .locked .prog:nth-child(n+4) { filter: blur(4px); pointer-events: none; user-select: none; }
+    .gate { border: 2px solid var(--accent); border-radius: 14px; padding: 1.75rem; background: var(--card);
+            box-shadow: var(--shadow-lg); margin-top: 1.25rem; }
+
+    .note { font-size: .875rem; color: var(--muted); background: var(--bg-secondary);
+            border-left: 3px solid var(--accent-light); padding: .875rem 1rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+
+    @media (max-width: 640px) {
+        .finder { padding: 1.5rem 0 3rem; }
+        .choices { grid-template-columns: 1fr 1fr; }
+    }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container header-content">
+        <a href="./index.html" class="logo logo-img">
+            <img src="./logo.svg" alt="Smutsail" onerror="this.parentElement.classList.remove('logo-img'); this.style.display='none'; this.parentElement.insertAdjacentText('beforeend','Smutsail');" />
+        </a>
+        <button class="hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
+        <nav class="nav" id="mainNav">
+            <a href="./index.html">Home</a>
+            <a href="./about.html">About</a>
+            <a href="./services.html">Services</a>
+            <a href="./index.html#download">App</a>
+            <a href="./find.html" class="waitlist-link find-link">Find Schools</a>
+        </nav>
+    </div>
+</header>
+
+<main class="container finder">
+  <div style="max-width:640px;margin:0 auto">
+
+    <div class="progress-dots" id="dots" aria-hidden="true">
+      <span class="dot on"></span><span class="dot"></span><span class="dot"></span>
+    </div>
+
+    <!-- 1 ─ field -->
+    <section class="step active" id="s1">
+      <span class="eyebrow">Step 1 of 3</span>
+      <div class="qlabel">What do you want to study?</div>
+      <p class="qhelp">A subject, a field, or the exact programme name.</p>
+      <input class="field" id="q" placeholder="e.g. computer science, data science, nursing" autocomplete="off">
+      <div class="choices" style="margin-top:1rem" id="quick"></div>
+      <div class="row"><button class="cta" id="n1">Continue</button></div>
+    </section>
+
+    <!-- 2 ─ level -->
+    <section class="step" id="s2">
+      <span class="eyebrow">Step 2 of 3</span>
+      <div class="qlabel">What level?</div>
+      <p class="qhelp">We currently cover master's programmes.</p>
+      <div class="choices">
+        <button class="choice" data-lvl="masters" aria-pressed="true">Master's</button>
+        <button class="choice" data-lvl="phd" aria-pressed="false">PhD</button>
+      </div>
+      <div class="row"><button class="cta" id="n2">Continue</button><button class="ghost" data-back="1">Back</button></div>
+    </section>
+
+    <!-- 3 ─ background -->
+    <section class="step" id="s3">
+      <span class="eyebrow">Step 3 of 3</span>
+      <div class="qlabel">Where are you applying from?</div>
+      <p class="qhelp">Deadlines differ for applicants outside the EU — this makes sure you see the right one.</p>
+      <div class="choices">
+        <button class="choice" data-origin="non-eu" aria-pressed="true">Outside the EU</button>
+        <button class="choice" data-origin="eu" aria-pressed="false">Inside the EU</button>
+      </div>
+      <div class="row"><button class="cta" id="n3">See my matches</button><button class="ghost" data-back="2">Back</button></div>
+    </section>
+
+    <!-- results -->
+    <section class="step" id="sr">
+      <div class="summary">
+        <div class="big" id="count">—</div>
+        <div class="sub" id="subline"></div>
+      </div>
+      <div id="list" class="locked"></div>
+
+      <div class="gate" id="gate">
+        <div class="qlabel" style="font-size:1.125rem">See all your matches</div>
+        <p class="qhelp" style="margin-bottom:1rem">We'll email your full list with every deadline and source link.</p>
+        <form class="waitlist-form" id="leadForm">
+          <input class="field" type="email" id="email" placeholder="your@email.com" required autocomplete="email">
+          <button class="cta" type="submit" id="leadBtn">Send me the list</button>
+        </form>
+        <div class="form-message" id="msg"></div>
+      </div>
+
+      <div class="note" id="coverage"></div>
+      <div class="row"><button class="ghost" data-back="1">Start over</button></div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container" style="text-align:center;color:var(--muted);font-size:.9375rem">
+    <p>Every deadline above links to where we found it. If we can't verify something, we don't show it.</p>
+    <p style="margin-top:.5rem">&copy; 2026 Smutsail</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var state = { q: '', lvl: 'masters', origin: 'non-eu' }, DATA = null, matches = [];
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ── data ──────────────────────────────────────────────────────────────────
+  fetch('data/programs.json')
+    .then(function (r) { return r.json(); })
+    .then(function (d) { DATA = d; seedQuickPicks(d); })
+    .catch(function () { DATA = { programs: [] }; });
+
+  function seedQuickPicks(d) {
+    var freq = {};
+    d.programs.forEach(function (p) {
+      (p.tags || []).forEach(function (t) { if (t.indexOf(' ') > 0) freq[t] = (freq[t] || 0) + 1; });
+    });
+    var top = Object.keys(freq).sort(function (a, b) { return freq[b] - freq[a]; }).slice(0, 4);
+    $('quick').innerHTML = top.map(function (t) {
+      return '<button class="choice" data-q="' + t + '">' + t.replace(/\b\w/g, function (c) { return c.toUpperCase(); }) + '</button>';
+    }).join('');
+  }
+
+  // ── matching ──────────────────────────────────────────────────────────────
+  // Plain keyword overlap. Deliberately simple: the value here is that the
+  // underlying data is real, not that the ranking is clever.
+  function score(p, terms) {
+    var hay = (p.p + ' ' + p.u + ' ' + (p.tags || []).join(' ')).toLowerCase();
+    var relevance = 0;
+    terms.forEach(function (t) {
+      if (!t) return;
+      if (p.p.toLowerCase().indexOf(t) >= 0) relevance += 10;
+      else if ((p.tags || []).indexOf(t) >= 0) relevance += 7;
+      else if (hay.indexOf(t) >= 0) relevance += 3;
+    });
+
+    // A programme that matched nothing scores nothing. The bonuses below are
+    // tie-breakers among relevant results, not a reason to show an irrelevant
+    // one — without this guard every programme with a deadline matches every
+    // query, and "underwater basket weaving" returns 144 results.
+    if (relevance === 0) return 0;
+
+    var bonus = 0;
+    if (p.dl) bonus += 4;                       // a known deadline is more useful
+    if (p.lang && /english/i.test(p.lang)) bonus += 2;
+    return relevance + bonus;
+  }
+
+  // Two-letter subject acronyms are real searches — AI, IT, CS. A blanket
+  // "longer than two characters" filter silently drops them.
+  var SHORT_TERMS = { ai: 1, it: 1, cs: 1, ml: 1, ux: 1, hr: 1 };
+
+  function run() {
+    var terms = state.q.toLowerCase().split(/[^a-z]+/).filter(function (t) {
+      return t.length > 2 || SHORT_TERMS[t];
+    });
+    var phrase = state.q.toLowerCase().trim();
+    if (phrase.indexOf(' ') > 0) terms.push(phrase);
+
+    matches = (DATA.programs || [])
+      .filter(function (p) { return p.lvl === state.lvl; })
+      .map(function (p) { return { p: p, s: score(p, terms) }; })
+      .filter(function (x) { return x.s > 0; })
+      .sort(function (a, b) {
+        if (b.s !== a.s) return b.s - a.s;
+        if (a.p.dl && b.p.dl) return a.p.dl.localeCompare(b.p.dl);   // soonest first
+        return a.p.dl ? -1 : 1;
+      })
+      .map(function (x) { return x.p; });
+
+    render();
+  }
+
+  function fmt(iso) {
+    if (!iso) return null;
+    var d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function daysTo(iso) {
+    return Math.ceil((new Date(iso + 'T00:00:00') - new Date()) / 864e5);
+  }
+
+  function card(p) {
+    var bits = [];
+    if (p.loc) bits.push('<span class="chip plain">' + p.loc + '</span>');
+    if (p.lang) bits.push('<span class="chip plain">' + p.lang + '</span>');
+    if (p.dur) bits.push('<span class="chip plain">' + p.dur + '</span>');
+    if (p.assist) bits.push('<span class="chip">via uni-assist</span>');
+
+    var dl;
+    if (p.dl) {
+      var n = daysTo(p.dl);
+      var urgent = n >= 0 && n <= 45;
+      dl = '<div class="dl' + (urgent ? ' soon' : '') + '">'
+         + '<b>' + (p.dlOpens ? fmt(p.dlOpens) + ' – ' : 'Closes ') + fmt(p.dl) + '</b>'
+         + '<small>' + (n >= 0 ? n + ' days left' : 'closed') + (p.dlCohort === 'non-eu' ? ' · non-EU applicants' : '') + '</small>'
+         + (p.dlCaveat ? '<small style="flex-basis:100%">' + p.dlCaveat + '</small>' : '')
+         + '</div>';
+    } else {
+      // No invented dates. Ever.
+      dl = '<div class="dl none"><b>Deadline not published</b>'
+         + '<small>Check the programme page</small></div>';
+    }
+
+    return '<article class="prog">'
+      + '<h3>' + p.p + '</h3>'
+      + '<div class="uni">' + p.u + ' · ' + p.cn + '</div>'
+      + '<div class="meta">' + bits.join('') + '</div>'
+      + dl
+      + '<div class="src">Source: <a href="' + (p.url || p.src) + '" target="_blank" rel="noopener">'
+      + (p.url || p.src).replace(/^https?:\/\/(www\.)?/, '').slice(0, 46) + '…</a></div>'
+      + '</article>';
+  }
+
+  function render() {
+    var withDl = matches.filter(function (p) { return p.dl; });
+    var unis = {}; matches.forEach(function (p) { unis[p.u] = 1; });
+
+    $('count').textContent = matches.length + (matches.length === 1 ? ' match' : ' matches');
+    $('subline').textContent = matches.length
+      ? Object.keys(unis).length + ' universities · ' + withDl.length + ' with confirmed deadlines'
+      : 'Nothing matched that search yet';
+
+    $('list').innerHTML = matches.slice(0, 12).map(card).join('')
+      || '<div class="note">No programmes matched. We currently cover '
+         + (DATA.count || 0) + ' German master\'s programmes — try a broader term like "engineering" or "computer science".</div>';
+
+    $('gate').style.display = matches.length > 3 ? 'block' : 'none';
+    $('list').className = matches.length > 3 ? 'locked' : '';
+
+    var soonest = withDl.map(function (p) { return p.dl; }).sort()[0];
+    $('coverage').innerHTML =
+      'We currently have verified data for <b>' + (DATA.count || 0) + ' master\'s programmes in Germany</b>, '
+      + (DATA.with_deadline || 0) + ' with confirmed application deadlines'
+      + (soonest ? '. Your nearest deadline is <b>' + fmt(soonest) + '</b>' : '')
+      + '. More countries are being added — every entry links to its source so you can check it yourself.';
+  }
+
+  // ── navigation ────────────────────────────────────────────────────────────
+  function show(step) {
+    ['s1', 's2', 's3', 'sr'].forEach(function (id) { $(id).classList.remove('active'); });
+    $(step).classList.add('active');
+    var i = { s1: 0, s2: 1, s3: 2, sr: 3 }[step];
+    [].forEach.call($('dots').children, function (d, n) { d.classList.toggle('on', n <= i); });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('button');
+    if (!t) return;
+
+    if (t.dataset.q) { $('q').value = t.dataset.q; }
+    if (t.dataset.lvl) {
+      [].forEach.call(t.parentNode.children, function (b) { b.setAttribute('aria-pressed', 'false'); });
+      t.setAttribute('aria-pressed', 'true'); state.lvl = t.dataset.lvl;
+    }
+    if (t.dataset.origin) {
+      [].forEach.call(t.parentNode.children, function (b) { b.setAttribute('aria-pressed', 'false'); });
+      t.setAttribute('aria-pressed', 'true'); state.origin = t.dataset.origin;
+    }
+    if (t.dataset.back) show('s' + t.dataset.back);
+  });
+
+  $('n1').onclick = function () {
+    state.q = $('q').value.trim();
+    if (!state.q) { $('q').focus(); return; }
+    show('s2');
+  };
+  $('n2').onclick = function () { show('s3'); };
+  $('n3').onclick = function () { show('sr'); run(); };
+  $('q').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('n1').click(); });
+
+  // ── lead capture ──────────────────────────────────────────────────────────
+  $('leadForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var msg = $('msg'), btn = $('leadBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+
+    fetch('/api/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: $('email').value.trim(),
+        query: state.q,
+        level: state.lvl,
+        origin: state.origin,
+        matchCount: matches.length,
+        topMatches: matches.slice(0, 10).map(function (p) { return p.u + ' — ' + p.p; })
+      })
+    })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        msg.style.display = 'block';
+        if (res.ok) {
+          msg.style.background = '#e9f9ef'; msg.style.color = '#1a7f43';
+          msg.textContent = 'Done — your full list is on its way to ' + $('email').value.trim() + '.';
+          $('list').className = '';                 // unblur as the reward
+          $('leadForm').style.display = 'none';
+        } else {
+          msg.style.background = '#fdecec'; msg.style.color = '#b3261e';
+          msg.textContent = (res.j && res.j.error) || 'Something went wrong. Please try again.';
+          btn.disabled = false; btn.textContent = 'Send me the list';
+        }
+      })
+      .catch(function () {
+        msg.style.display = 'block';
+        msg.style.background = '#fdecec'; msg.style.color = '#b3261e';
+        msg.textContent = 'Network error. Please try again.';
+        btn.disabled = false; btn.textContent = 'Send me the list';
+      });
+  });
+})();
+</script>
+<script src="./main.js"></script>
+</body>
+</html>

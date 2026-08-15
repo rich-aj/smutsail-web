@@ -1,0 +1,25 @@
+# Environment / secrets — never commit these.
+# Vercel env vars belong in the dashboard, not the repo.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies
+node_modules/
+
+# Vercel
+.vercel/
+
+# macOS
+.DS_Store
+
+# Editor
+.idea/
+.vscode/
+*.swp
+
+# Saved source pages used for building the corpus — large, and regenerable.
+# data/programs.json IS committed: the finder page needs it at runtime.
+data/*.html

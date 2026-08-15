@@ -1180,3 +1180,37 @@ ol {
         height: 380px;
     }
 }
+
+/* ── Primary nav action: Find Schools ──────────────────────────────────────
+   This replaced "Get Beta Access" as the header CTA. It is the only nav item
+   that does something for a visitor immediately, so it is styled as a filled
+   button rather than an outlined link — the outline version read as secondary
+   and people missed it. */
+.nav a.find-link {
+    background: var(--accent-gradient);
+    color: #fff !important;
+    border: none;
+    font-weight: 600;
+    padding: 0.625rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.nav a.find-link:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    opacity: 0.95;
+}
+
+/* The mobile nav is a stacked drawer, so the pill needs its own spacing and
+   must not inherit the full-width bottom border the other links use. */
+@media (max-width: 968px) {
+    .nav a.find-link {
+        text-align: center;
+        margin-top: 0.75rem;
+        padding: 0.875rem 1.5rem;
+        border-bottom: none;
+        color: #fff !important;
+    }
+}
