@@ -105,12 +105,12 @@
   <div style="max-width:640px;margin:0 auto">
 
     <div class="progress-dots" id="dots" aria-hidden="true">
-      <span class="dot on"></span><span class="dot"></span><span class="dot"></span>
+      <span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
     </div>
 
     <!-- 1 ─ field -->
     <section class="step active" id="s1">
-      <span class="eyebrow">Step 1 of 3</span>
+      <span class="eyebrow">Step 1 of 4</span>
       <div class="qlabel">What do you want to study?</div>
       <p class="qhelp">A subject, a field, or the exact programme name.</p>
       <input class="field" id="q" placeholder="e.g. computer science, data science, nursing" autocomplete="off">
@@ -120,7 +120,7 @@
 
     <!-- 2 ─ level -->
     <section class="step" id="s2">
-      <span class="eyebrow">Step 2 of 3</span>
+      <span class="eyebrow">Step 2 of 4</span>
       <div class="qlabel">What level?</div>
       <p class="qhelp">We currently cover master's programmes.</p>
       <div class="choices">
@@ -130,9 +130,18 @@
       <div class="row"><button class="cta" id="n2">Continue</button><button class="ghost" data-back="1">Back</button></div>
     </section>
 
+    <!-- 2b ─ destination -->
+    <section class="step" id="s2b">
+      <span class="eyebrow">Step 3 of 4</span>
+      <div class="qlabel">Where do you want to study?</div>
+      <p class="qhelp" id="countryHelp">Pick as many as you like.</p>
+      <div class="choices" id="countries"></div>
+      <div class="row"><button class="cta" id="n2b">Continue</button><button class="ghost" data-back="2">Back</button></div>
+    </section>
+
     <!-- 3 ─ background -->
     <section class="step" id="s3">
-      <span class="eyebrow">Step 3 of 3</span>
+      <span class="eyebrow">Step 4 of 4</span>
       <div class="qlabel">Where are you applying from?</div>
       <p class="qhelp">Deadlines differ for applicants outside the EU — this makes sure you see the right one.</p>
       <div class="choices">
@@ -178,14 +187,42 @@
 (function () {
   'use strict';
 
-  var state = { q: '', lvl: 'masters', origin: 'non-eu' }, DATA = null, matches = [];
+  var state = { q: '', lvl: 'masters', origin: 'non-eu', countries: [] }, DATA = null, matches = [];
   var $ = function (id) { return document.getElementById(id); };
 
   // ── data ──────────────────────────────────────────────────────────────────
   fetch('data/programs.json')
     .then(function (r) { return r.json(); })
-    .then(function (d) { DATA = d; seedQuickPicks(d); })
+    .then(function (d) { DATA = d; seedQuickPicks(d); buildCountries(d); })
     .catch(function () { DATA = { programs: [] }; });
+
+  var COUNTRY_NAMES = { DE: 'Germany', SE: 'Sweden', NL: 'Netherlands', FI: 'Finland',
+                        DK: 'Denmark', UK: 'United Kingdom', CA: 'Canada', US: 'United States' };
+
+  function buildCountries(d) {
+    var counts = {};
+    d.programs.forEach(function (p) { counts[p.c] = (counts[p.c] || 0) + 1; });
+    var codes = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+
+    // Default to everything we have — a student who skips this step should see
+    // all their options, not none of them.
+    state.countries = codes.slice();
+
+    $('countries').innerHTML = codes.map(function (c) {
+      return '<button class="choice" data-country="' + c + '" aria-pressed="true">'
+           + (COUNTRY_NAMES[c] || c)
+           + '<span style="display:block;font-weight:400;color:var(--muted);font-size:.8125rem">'
+           + counts[c] + ' programmes</span></button>';
+    }).join('');
+
+    if (codes.length === 1) {
+      // One country means this question has no answer worth asking. Say what we
+      // cover and move on rather than presenting a choice that isn't one.
+      $('countryHelp').textContent =
+        'Right now we have verified data for ' + (COUNTRY_NAMES[codes[0]] || codes[0])
+        + ' only. More countries are being added.';
+    }
+  }
 
   function seedQuickPicks(d) {
     var freq = {};
@@ -201,26 +238,40 @@
   // ── matching ──────────────────────────────────────────────────────────────
   // Plain keyword overlap. Deliberately simple: the value here is that the
   // underlying data is real, not that the ranking is clever.
+  // Whole-word matching. Substring matching looks fine until you search "AI"
+  // and the top result is "Textile Chain Research" — because "ai" sits inside
+  // "chain". Same trap catches "it" in "quality" and "cs" in "physics".
+  function hasWord(haystack, term) {
+    var esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('(^|[^a-z])' + esc + '([^a-z]|$)', 'i').test(haystack);
+  }
+
   function score(p, terms) {
-    var hay = (p.p + ' ' + p.u + ' ' + (p.tags || []).join(' ')).toLowerCase();
-    var relevance = 0;
+    var title = p.p.toLowerCase();
+    var tags = p.tags || [];
+    var other = (p.u + ' ' + tags.join(' ')).toLowerCase();
+
+    var strong = 0;   // the query really is about this programme
+    var weak = 0;     // incidental mention — ranks, but does not qualify
+
     terms.forEach(function (t) {
       if (!t) return;
-      if (p.p.toLowerCase().indexOf(t) >= 0) relevance += 10;
-      else if ((p.tags || []).indexOf(t) >= 0) relevance += 7;
-      else if (hay.indexOf(t) >= 0) relevance += 3;
+      if (title.indexOf(t) >= 0 && t.indexOf(' ') > 0) strong += 14;  // full phrase in title
+      else if (hasWord(title, t)) strong += 9;                        // whole word in title
+      else if (tags.indexOf(t) >= 0) strong += 6;                     // exact tag
+      else if (hasWord(other, t)) weak += 2;
     });
 
-    // A programme that matched nothing scores nothing. The bonuses below are
-    // tie-breakers among relevant results, not a reason to show an irrelevant
-    // one — without this guard every programme with a deadline matches every
-    // query, and "underwater basket weaving" returns 144 results.
-    if (relevance === 0) return 0;
+    // Requiring a STRONG signal is what keeps result counts meaningful. Before
+    // this, "computer science" matched 560 of 1054 programmes because the word
+    // "science" appears everywhere — a number that impresses nobody and helps
+    // no one.
+    if (strong === 0) return 0;
 
     var bonus = 0;
     if (p.dl) bonus += 4;                       // a known deadline is more useful
     if (p.lang && /english/i.test(p.lang)) bonus += 2;
-    return relevance + bonus;
+    return strong + weak + bonus;
   }
 
   // Two-letter subject acronyms are real searches — AI, IT, CS. A blanket
@@ -236,6 +287,7 @@
 
     matches = (DATA.programs || [])
       .filter(function (p) { return p.lvl === state.lvl; })
+      .filter(function (p) { return !state.countries.length || state.countries.indexOf(p.c) >= 0; })
       .map(function (p) { return { p: p, s: score(p, terms) }; })
       .filter(function (x) { return x.s > 0; })
       .sort(function (a, b) {
@@ -265,7 +317,15 @@
     if (p.assist) bits.push('<span class="chip">via uni-assist</span>');
 
     var dl;
-    if (p.dl) {
+    if (p.dl && p.notOpenYet) {
+      // Applications haven't opened. Counting down to the close date would imply
+      // you can apply today — the useful fact is when the window starts.
+      dl = '<div class="dl">'
+         + '<b>Opens ' + fmt(p.dlOpens) + '</b>'
+         + '<small>closes ' + fmt(p.dl) + ' · in ' + daysTo(p.dlOpens) + ' days'
+         + (p.dlCohort === 'non-eu' ? ' · non-EU applicants' : '') + '</small>'
+         + '</div>';
+    } else if (p.dl) {
       var n = daysTo(p.dl);
       var urgent = n >= 0 && n <= 45;
       dl = '<div class="dl' + (urgent ? ' soon' : '') + '">'
@@ -273,6 +333,11 @@
          + '<small>' + (n >= 0 ? n + ' days left' : 'closed') + (p.dlCohort === 'non-eu' ? ' · non-EU applicants' : '') + '</small>'
          + (p.dlCaveat ? '<small style="flex-basis:100%">' + p.dlCaveat + '</small>' : '')
          + '</div>';
+    } else if (p.guide) {
+      // No date, but DAAD does say what a non-EU applicant should do. That is a
+      // real answer — and it is visibly not a date, so it cannot be mistaken for one.
+      dl = '<div class="dl none"><b>No fixed deadline published</b>'
+         + '<small style="flex-basis:100%">For applicants outside the EU: ' + p.guide + '</small></div>';
     } else {
       // No invented dates. Ever.
       dl = '<div class="dl none"><b>Deadline not published</b>'
@@ -291,11 +356,15 @@
 
   function render() {
     var withDl = matches.filter(function (p) { return p.dl; });
-    var unis = {}; matches.forEach(function (p) { unis[p.u] = 1; });
+    var unis = {}; var ctry = {};
+    matches.forEach(function (p) { unis[p.u] = 1; ctry[p.c] = 1; });
+    var nCountries = Object.keys(ctry).length;
 
     $('count').textContent = matches.length + (matches.length === 1 ? ' match' : ' matches');
     $('subline').textContent = matches.length
-      ? Object.keys(unis).length + ' universities · ' + withDl.length + ' with confirmed deadlines'
+      ? Object.keys(unis).length + ' universities'
+        + (nCountries > 1 ? ' across ' + nCountries + ' countries' : '')
+        + ' · ' + withDl.length + ' with confirmed deadlines'
       : 'Nothing matched that search yet';
 
     $('list').innerHTML = matches.slice(0, 12).map(card).join('')
@@ -315,9 +384,9 @@
 
   // ── navigation ────────────────────────────────────────────────────────────
   function show(step) {
-    ['s1', 's2', 's3', 'sr'].forEach(function (id) { $(id).classList.remove('active'); });
+    ['s1', 's2', 's2b', 's3', 'sr'].forEach(function (id) { $(id).classList.remove('active'); });
     $(step).classList.add('active');
-    var i = { s1: 0, s2: 1, s3: 2, sr: 3 }[step];
+    var i = { s1: 0, s2: 1, s2b: 2, s3: 3, sr: 4 }[step];
     [].forEach.call($('dots').children, function (d, n) { d.classList.toggle('on', n <= i); });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -335,7 +404,15 @@
       [].forEach.call(t.parentNode.children, function (b) { b.setAttribute('aria-pressed', 'false'); });
       t.setAttribute('aria-pressed', 'true'); state.origin = t.dataset.origin;
     }
-    if (t.dataset.back) show('s' + t.dataset.back);
+    // Countries are multi-select — toggling, not choosing one.
+    if (t.dataset.country) {
+      var on = t.getAttribute('aria-pressed') !== 'true';
+      t.setAttribute('aria-pressed', on ? 'true' : 'false');
+      state.countries = [].filter.call($('countries').children, function (b) {
+        return b.getAttribute('aria-pressed') === 'true';
+      }).map(function (b) { return b.dataset.country; });
+    }
+    if (t.dataset.back) show(t.dataset.back === '2b' ? 's2b' : 's' + t.dataset.back);
   });
 
   $('n1').onclick = function () {
@@ -343,7 +420,15 @@
     if (!state.q) { $('q').focus(); return; }
     show('s2');
   };
-  $('n2').onclick = function () { show('s3'); };
+  $('n2').onclick = function () { show('s2b'); };
+  $('n2b').onclick = function () {
+    // Deselecting everything is almost certainly a mistake, not a request for
+    // zero results. Treat it as "no preference".
+    if (!state.countries.length) {
+      state.countries = [].map.call($('countries').children, function (b) { return b.dataset.country; });
+    }
+    show('s3');
+  };
   $('n3').onclick = function () { show('sr'); run(); };
   $('q').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('n1').click(); });
 
