@@ -72,6 +72,13 @@
     .gate { border: 2px solid var(--accent); border-radius: 14px; padding: 1.75rem; background: var(--card);
             box-shadow: var(--shadow-lg); margin-top: 1.25rem; }
 
+    .refine { display: flex; gap: .5rem; flex-wrap: wrap; margin: 0 0 1rem; }
+    .tog { font: inherit; font-size: .8125rem; font-weight: 500; cursor: pointer;
+           padding: .4rem .875rem; border-radius: 999px; border: 1.5px solid var(--border);
+           background: var(--card); color: var(--muted); transition: all .15s ease; }
+    .tog:hover { border-color: var(--accent-light); }
+    .tog[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-2); }
+
     .note { font-size: .875rem; color: var(--muted); background: var(--bg-secondary);
             border-left: 3px solid var(--accent-light); padding: .875rem 1rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
 
@@ -142,13 +149,15 @@
     <!-- 3 ─ background -->
     <section class="step" id="s3">
       <span class="eyebrow">Step 4 of 4</span>
-      <div class="qlabel">Where are you applying from?</div>
-      <p class="qhelp">Deadlines differ for applicants outside the EU — this makes sure you see the right one.</p>
+      <div class="qlabel">Which passport do you hold?</div>
+      <p class="qhelp">Deadlines and tuition differ for EU applicants — this makes sure you see the right ones.
+        It's about your passport, not where you live now.</p>
       <div class="choices">
-        <button class="choice" data-origin="non-eu" aria-pressed="true">Outside the EU</button>
-        <button class="choice" data-origin="eu" aria-pressed="false">Inside the EU</button>
+        <button class="choice" data-origin="non-eu" aria-pressed="true">Non-EU
+          <span style="display:block;font-weight:400;color:var(--muted);font-size:.8125rem">Nigeria, India, UK, US and most others</span></button>
+        <button class="choice" data-origin="eu" aria-pressed="false">EU, EEA or Switzerland</button>
       </div>
-      <div class="row"><button class="cta" id="n3">See my matches</button><button class="ghost" data-back="2">Back</button></div>
+      <div class="row"><button class="cta" id="n3">See my matches</button><button class="ghost" data-back="2b">Back</button></div>
     </section>
 
     <!-- results -->
@@ -157,6 +166,7 @@
         <div class="big" id="count">—</div>
         <div class="sub" id="subline"></div>
       </div>
+      <div class="refine" id="refine"></div>
       <div id="list" class="locked"></div>
 
       <div class="gate" id="gate">
@@ -187,7 +197,14 @@
 (function () {
   'use strict';
 
-  var state = { q: '', lvl: 'masters', origin: 'non-eu', countries: [] }, DATA = null, matches = [];
+  var state = {
+    q: '', lvl: 'masters', origin: 'non-eu', countries: [],
+    // Refinement defaults. Both start ON: a non-German-speaking applicant cannot
+    // use a German-taught programme, and nobody can apply to a closed one.
+    hideClosed: true,
+    englishOnly: true,
+  };
+  var DATA = null, matches = [], allMatches = [];
   var $ = function (id) { return document.getElementById(id); };
 
   // ── data ──────────────────────────────────────────────────────────────────
@@ -269,10 +286,36 @@
     if (strong === 0) return 0;
 
     var bonus = 0;
-    if (p.dl) bonus += 4;                       // a known deadline is more useful
-    if (p.lang && /english/i.test(p.lang)) bonus += 2;
+    // Reward a deadline you can still act on. The previous version rewarded
+    // merely HAVING a deadline, which floated 220 expired programmes above live
+    // ones — that is why the top three results on the page read "closed".
+    if (isOpen(p) || opensLater(p)) bonus += 4;
+    if (p.langP === 'en') bonus += 2;
     return strong + weak + bonus;
   }
+
+  // ── deadline state, computed NOW ─────────────────────────────────────────
+  // Never precomputed into the data. A corpus built in August described August;
+  // by mid-September it was advertising dates that had already passed. Anything
+  // that depends on today's date has to be worked out when the page renders.
+  function today() { return new Date().toISOString().slice(0, 10); }
+
+  // The window that applies to THIS applicant.
+  //
+  // The corpus stores the non-EU window by default, plus an EU one where the
+  // university publishes something different — 123 programmes, sometimes months
+  // apart. Picking the wrong one tells someone their deadline has passed when it
+  // hasn't, or that they have until January when it closed in November.
+  function dlFor(p) {
+    if (state.origin === 'eu' && p.eDl) {
+      return { opens: p.eDlOpens || null, closes: p.eDl, cohort: 'eu' };
+    }
+    return { opens: p.dlOpens || null, closes: p.dl || null, cohort: p.dlCohort || null };
+  }
+
+  function isClosed(p)   { var w = dlFor(p); return Boolean(w.closes && w.closes < today()); }
+  function opensLater(p) { var w = dlFor(p); return Boolean(w.opens && w.opens > today()); }
+  function isOpen(p)     { var w = dlFor(p); return Boolean(w.closes && !isClosed(p) && !opensLater(p)); }
 
   // Two-letter subject acronyms are real searches — AI, IT, CS. A blanket
   // "longer than two characters" filter silently drops them.
@@ -285,18 +328,32 @@
     var phrase = state.q.toLowerCase().trim();
     if (phrase.indexOf(' ') > 0) terms.push(phrase);
 
-    matches = (DATA.programs || [])
+    allMatches = (DATA.programs || [])
       .filter(function (p) { return p.lvl === state.lvl; })
       .filter(function (p) { return !state.countries.length || state.countries.indexOf(p.c) >= 0; })
       .map(function (p) { return { p: p, s: score(p, terms) }; })
       .filter(function (x) { return x.s > 0; })
       .sort(function (a, b) {
         if (b.s !== a.s) return b.s - a.s;
-        if (a.p.dl && b.p.dl) return a.p.dl.localeCompare(b.p.dl);   // soonest first
-        return a.p.dl ? -1 : 1;
+        // Soonest first, using each applicant's own window.
+        var ad = dlFor(a.p).closes, bd = dlFor(b.p).closes;
+        if (ad && bd) return ad.localeCompare(bd);
+        return ad ? -1 : 1;
       })
       .map(function (x) { return x.p; });
 
+    applyRefinements();
+  }
+
+  // Refinements run over the scored set, so toggling one is instant and never
+  // re-searches. Closed programmes are hidden by default — showing someone a
+  // deadline they cannot meet is worse than showing them nothing.
+  function applyRefinements() {
+    matches = allMatches.filter(function (p) {
+      if (state.hideClosed && isClosed(p)) return false;
+      if (state.englishOnly && p.langP !== 'en') return false;
+      return true;
+    });
     render();
   }
 
@@ -316,21 +373,29 @@
     if (p.dur) bits.push('<span class="chip plain">' + p.dur + '</span>');
     if (p.assist) bits.push('<span class="chip">via uni-assist</span>');
 
+    var w = dlFor(p);
+    // Label the window so it is clear which applicant it describes.
+    var cohort = w.cohort === 'eu' ? ' · EU/EEA applicants'
+               : w.cohort === 'non-eu' ? ' · non-EU applicants' : '';
     var dl;
-    if (p.dl && p.notOpenYet) {
+    if (opensLater(p)) {
       // Applications haven't opened. Counting down to the close date would imply
       // you can apply today — the useful fact is when the window starts.
       dl = '<div class="dl">'
-         + '<b>Opens ' + fmt(p.dlOpens) + '</b>'
-         + '<small>closes ' + fmt(p.dl) + ' · in ' + daysTo(p.dlOpens) + ' days'
-         + (p.dlCohort === 'non-eu' ? ' · non-EU applicants' : '') + '</small>'
+         + '<b>Opens ' + fmt(w.opens) + '</b>'
+         + '<small>closes ' + fmt(w.closes) + ' · in ' + daysTo(w.opens) + ' days' + cohort + '</small>'
          + '</div>';
-    } else if (p.dl) {
-      var n = daysTo(p.dl);
+    } else if (isClosed(p)) {
+      // Only reachable when the user has deliberately un-hidden closed results.
+      // Say so plainly and do not dress it up with a countdown.
+      dl = '<div class="dl none"><b>Closed ' + fmt(w.closes) + '</b>'
+         + '<small>this intake has passed' + cohort + '</small></div>';
+    } else if (w.closes) {
+      var n = daysTo(w.closes);
       var urgent = n >= 0 && n <= 45;
       dl = '<div class="dl' + (urgent ? ' soon' : '') + '">'
-         + '<b>' + (p.dlOpens ? fmt(p.dlOpens) + ' – ' : 'Closes ') + fmt(p.dl) + '</b>'
-         + '<small>' + (n >= 0 ? n + ' days left' : 'closed') + (p.dlCohort === 'non-eu' ? ' · non-EU applicants' : '') + '</small>'
+         + '<b>' + (w.opens ? fmt(w.opens) + ' – ' : 'Closes ') + fmt(w.closes) + '</b>'
+         + '<small>' + n + ' days left' + cohort + '</small>'
          + (p.dlCaveat ? '<small style="flex-basis:100%">' + p.dlCaveat + '</small>' : '')
          + '</div>';
     } else if (p.guide) {
@@ -354,32 +419,71 @@
       + '</article>';
   }
 
+  var SHOW = 10;
+
   function render() {
-    var withDl = matches.filter(function (p) { return p.dl; });
+    var shown = matches.slice(0, SHOW);
     var unis = {}; var ctry = {};
-    matches.forEach(function (p) { unis[p.u] = 1; ctry[p.c] = 1; });
+    shown.forEach(function (p) { unis[p.u] = 1; ctry[p.c] = 1; });
     var nCountries = Object.keys(ctry).length;
+    var actionable = matches.filter(function (p) { return isOpen(p) || opensLater(p); }).length;
 
-    $('count').textContent = matches.length + (matches.length === 1 ? ' match' : ' matches');
-    $('subline').textContent = matches.length
-      ? Object.keys(unis).length + ' universities'
+    // Lead with the shortlist, not the pile. "145 matches" reads as noise;
+    // "your 10 best matches, from 145 that fit" reads as thoroughness.
+    if (!matches.length) {
+      $('count').textContent = 'No matches';
+      $('subline').textContent = allMatches.length
+        ? 'All ' + allMatches.length + ' matches were filtered out — try relaxing the options below'
+        : 'Nothing matched that search yet';
+    } else if (matches.length <= SHOW) {
+      $('count').textContent = matches.length + (matches.length === 1 ? ' match' : ' matches');
+      $('subline').textContent = Object.keys(unis).length + ' universities'
         + (nCountries > 1 ? ' across ' + nCountries + ' countries' : '')
-        + ' · ' + withDl.length + ' with confirmed deadlines'
-      : 'Nothing matched that search yet';
+        + ' · ' + actionable + ' with confirmed deadlines';
+    } else {
+      $('count').textContent = 'Your ' + SHOW + ' best matches';
+      $('subline').textContent = 'from ' + matches.length + ' that fit · '
+        + Object.keys(unis).length + ' universities'
+        + (nCountries > 1 ? ' across ' + nCountries + ' countries' : '');
+    }
 
-    $('list').innerHTML = matches.slice(0, 12).map(card).join('')
-      || '<div class="note">No programmes matched. We currently cover '
-         + (DATA.count || 0) + ' German master\'s programmes — try a broader term like "engineering" or "computer science".</div>';
+    renderRefinements();
+
+    $('list').innerHTML = shown.map(card).join('')
+      || '<div class="note">Nothing left after filtering. Try turning off a filter above, '
+         + 'or search a broader term like "engineering".</div>';
 
     $('gate').style.display = matches.length > 3 ? 'block' : 'none';
     $('list').className = matches.length > 3 ? 'locked' : '';
 
-    var soonest = withDl.map(function (p) { return p.dl; }).sort()[0];
+    var soonest = matches.filter(isOpen).map(function (p) { return dlFor(p).closes; }).sort()[0];
+    var cn = (DATA.countries || []).map(function (c) { return COUNTRY_NAMES[c] || c; });
     $('coverage').innerHTML =
-      'We currently have verified data for <b>' + (DATA.count || 0) + ' master\'s programmes in Germany</b>, '
-      + (DATA.with_deadline || 0) + ' with confirmed application deadlines'
-      + (soonest ? '. Your nearest deadline is <b>' + fmt(soonest) + '</b>' : '')
-      + '. More countries are being added — every entry links to its source so you can check it yourself.';
+      'We have verified data for <b>' + (DATA.count || 0) + ' master\'s programmes</b> in '
+      + (cn.join(' and ') || 'our covered countries') + ', '
+      + (DATA.with_deadline || 0) + ' with application deadlines'
+      + (soonest ? '. Your nearest open deadline is <b>' + fmt(soonest) + '</b>' : '')
+      + '. Every entry links to its source so you can check it yourself.';
+  }
+
+  // Refinements live above the results, where they cost nothing to ignore.
+  // Asking these as questions up front would tax every user for a filter only
+  // some of them need.
+  function renderRefinements() {
+    var closedCount  = allMatches.filter(isClosed).length;
+    var nonEngCount  = allMatches.filter(function (p) { return p.langP !== 'en'; }).length;
+    var bits = [];
+
+    if (closedCount) {
+      bits.push('<button class="tog" data-tog="hideClosed" aria-pressed="' + state.hideClosed + '">'
+        + (state.hideClosed ? 'Hiding ' : 'Showing ') + closedCount + ' closed</button>');
+    }
+    if (nonEngCount) {
+      bits.push('<button class="tog" data-tog="englishOnly" aria-pressed="' + state.englishOnly + '">'
+        + (state.englishOnly ? 'English-taught only' : 'All languages') + '</button>');
+    }
+    $('refine').innerHTML = bits.join('');
+    $('refine').style.display = bits.length ? 'flex' : 'none';
   }
 
   // ── navigation ────────────────────────────────────────────────────────────
@@ -411,6 +515,11 @@
       state.countries = [].filter.call($('countries').children, function (b) {
         return b.getAttribute('aria-pressed') === 'true';
       }).map(function (b) { return b.dataset.country; });
+    }
+    if (t.dataset.tog) {
+      state[t.dataset.tog] = !state[t.dataset.tog];
+      applyRefinements();
+      return;
     }
     if (t.dataset.back) show(t.dataset.back === '2b' ? 's2b' : 's' + t.dataset.back);
   });
