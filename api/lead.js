@@ -12,6 +12,7 @@
  * 1. Vercel → Settings → Environment Variables:
  *
  *      FIREBASE_DB_URL   https://<project>-default-rtdb.firebaseio.com
+ *      (FIREBASE_DATABASE_URL is accepted too — the waitlist function uses that name)
  *      FIREBASE_DB_SECRET  (optional but recommended — see below)
  *
  * 2. Firebase → Realtime Database → Rules. Leads are write-only from the web:
@@ -55,9 +56,12 @@ module.exports = async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const dbUrl = process.env.FIREBASE_DB_URL;
+    // Accept either name. The project already had FIREBASE_DATABASE_URL set for
+    // the waitlist function; requiring a second variable holding the identical
+    // value is just one more thing to get out of sync.
+    const dbUrl = process.env.FIREBASE_DB_URL || process.env.FIREBASE_DATABASE_URL;
     if (!dbUrl) {
-        console.error('lead: FIREBASE_DB_URL is not set');
+        console.error('lead: neither FIREBASE_DB_URL nor FIREBASE_DATABASE_URL is set');
         return res.status(500).json({ error: 'Lead capture is not configured yet.' });
     }
 
