@@ -29,6 +29,8 @@
  *    booth if you have five minutes.
  */
 
+const { sendMatchesEmail } = require('./_email');
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 // Crude in-memory throttle. Serverless instances are recycled, so this is a
@@ -90,6 +92,20 @@ module.exports = async function handler(req, res) {
         topMatches: Array.isArray(body.topMatches)
             ? body.topMatches.slice(0, 10).map((s) => String(s).slice(0, 160))
             : [],
+        programmes: Array.isArray(body.programmes)
+            ? body.programmes.slice(0, 15).map((x) => ({
+                university: String(x.university || '').slice(0, 120),
+                name: String(x.name || '').slice(0, 160),
+                country: String(x.country || '').slice(0, 40),
+                city: x.city ? String(x.city).slice(0, 60) : null,
+                language: x.language ? String(x.language).slice(0, 60) : null,
+                duration: x.duration ? String(x.duration).slice(0, 40) : null,
+                fee: x.fee ? String(x.fee).slice(0, 120) : null,
+                opens: x.opens ? String(x.opens).slice(0, 10) : null,
+                closes: x.closes ? String(x.closes).slice(0, 10) : null,
+                url: x.url ? String(x.url).slice(0, 300) : null,
+            }))
+            : [],
         source: 'find-page',
         userAgent: String(req.headers['user-agent'] || '').slice(0, 200),
         createdAt: new Date().toISOString(),
@@ -112,7 +128,20 @@ module.exports = async function handler(req, res) {
             return res.status(502).json({ error: 'Could not save your details. Please try again.' });
         }
 
-        return res.status(200).json({ ok: true });
+        // Email is best-effort and deliberately after the save. If Resend is
+        // down or unconfigured the lead is still captured and the user still
+        // gets their list on screen — we just do not claim an email was sent.
+        const mail = await sendMatchesEmail(email, {
+            query: lead.query,
+            programmes: lead.programmes,
+            matchCount: lead.matchCount,
+            origin: lead.origin,
+        });
+        if (!mail.sent && mail.reason !== 'no-api-key') {
+            console.error('lead: saved but email failed —', mail.reason);
+        }
+
+        return res.status(200).json({ ok: true, emailed: mail.sent });
     } catch (err) {
         console.error('lead: unexpected error', err && err.message);
         return res.status(500).json({ error: 'Something went wrong. Please try again.' });
